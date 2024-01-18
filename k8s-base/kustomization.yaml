@@ -1,0 +1,13 @@
+apiVersion: kustomization.config.k8s.io/v1beta1
+kind: kustomization
+images:
+- name: spring-boot-image
+  newName: hemasivakishore/aks
+  newTag: IMAGE_TAG
+
+
+resources:
+- spring-deployment.yaml
+- spring-ingress.yaml
+- alb-ingress.yaml
+- voting.yaml

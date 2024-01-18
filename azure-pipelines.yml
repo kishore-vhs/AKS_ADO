@@ -1,71 +1,71 @@
-trigger: 
+trigger:
 - master
 
 pool:
   name: LinuxAgentPool
 
-variables: 
+variables:
 - name: image-tag
   value: $(Build.BuildNumber)
 
 stages:
-  - stage: BuildingJavaCodeWithMavenAndBuildDockerImageAndPush
-    jobs:
-    - job: CheckingJAVAHOME
-      steps:
-      - task: CmdLine@2
-        displayName: Setting up JAVA_HOME
-        inputs:
-          script: |
-            export JAVA_HOME_17_X64='/usr/lib/jvm/java-17-openjdk-amd64/bin'
-            export JAVA_HOME='/usr/lib/jvm/java-17-openjdk-amd64/bin'
-            echo $JAVA_HOME_17_X64
-            echo $JAVA_HOME
-      - task: Maven@4
-        displayName: Building SpringBoot App with Maven
-        inputs:
-          mavenPomFile: 'pom.xml'
-          mavenOptions: '-Xmx3072m'
-          javaHomeOption: 'Path'
-          jdkDirectory: '/usr/lib/jvm/java-17-openjdk-amd64'
-          jdkVersionOption: '1.11'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: true
-          testResultsFiles: '**/surefire-reports/Test-*.xml'
-          goals: 'package'
-      - task: Docker@2
-        displayName: Docker Build & Push
-        inputs:
-          containerRegistry: 'docker'
-          repository: 'hemasivakishore/aks'
-          command: 'buildAndPush'
-          Dockerfile: '**/Dockerfile'
-          tags: '$(Build.BuildNumber)'
-      
-  - stage: DeployAppToAKSCluster
-    jobs:
-      - job: DownloadKubeConfigAndDeployApplication
-        steps:
-        - task: CopyFiles@2
-          displayName: Copy Kube Config to Repo
-          inputs:
-            SourceFolder: '$(Agent.TempDirectory)'
-            Contents: '**'
-            TargetFolder: '/home/hsk/myagent/_work/1/s/'
-        - task: DownloadSecureFile@1
-          displayName: Download kubeconfig from secure file
-          inputs:
-            secureFile: 'kubeconfig'
-        - task: CmdLine@2
-          displayName: Deploying K8S Manifest
-          inputs:
-            script: |
-              export KUBECONFIG=/home/hsk/myagent/_work/1/s/kubeconfig
-              kubectl cluster-info
-              kubectl get nodes
-              kubectl get pods -A
-              echo $(Build.BuildNumber)
-              echo $(Build.BuildId)
-              sed -i "s/IMAGE_TAG/\"$(Build.BuildNumber)\"/g" k8s-base/kustomization.yaml
-              cat k8s-base/kustomization.yaml
-              cd k8s-base && kubectl apply -k .
+- stage: BuildingJavaCodeWithMavenAndBuildDockerImageAndPush
+  jobs:
+  - job: CheckingJAVAHOME
+    steps:
+    - task: CmdLine@2
+      displayName: Setting up JAVA_HOME
+      inputs:
+        script: |
+          export JAVA_HOME_17_X64='/usr/lib/jvm/java-17-openjdk-amd64/bin'
+          export JAVA_HOME='/usr/lib/jvm/java-17-openjdk-amd64/bin'
+          echo $JAVA_HOME_17_X64
+          echo $JAVA_HOME
+    - task: Maven@4
+      displayName: Building SpringBoot App with Maven
+      inputs:
+        mavenPomFile: 'pom.xml'
+        mavenOptions: '-Xmx3072m'
+        javaHomeOption: 'Path'
+        jdkDirectory: '/usr/lib/jvm/java-17-openjdk-amd64'
+        jdkVersionOption: '1.11'
+        jdkArchitectureOption: 'x64'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/Test-*.xml'
+        goals: 'package'
+    - task: Docker@2
+      displayName: Docker Build & Push
+      inputs:
+        containerRegistry: 'docker'
+        repository: 'hemasivakishore/aks-springpetclinic'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: '$(Build.BuildNumber)'
+
+- stage: DeployAppToAKSCluster
+  jobs:
+  - job: DownloadKubeConfigAndDeployApplication
+    steps:
+    - task: CopyFiles@2
+      displayName: Copy Kube Config to Repo
+      inputs:
+        SourceFolder: '$(Agent.TempDirectory)'
+        Contents: '**'
+        TargetFolder: '/home/hsk/myagent/_work/1/s/'
+    - task: DownloadSecureFile@1
+      displayName: Download kubeconfig from secure file
+      inputs:
+        secureFile: 'kubeconfig'
+    - task: CmdLine@2
+      displayName: Deploying K8S Manifest
+      inputs:
+        script: |
+          export KUBECONFIG=/home/hsk/myagent/_work/1/s/kubeconfig
+          kubectl cluster-info
+          kubectl get nodes
+          kubectl get pods -A
+          echo $(Build.BuildNumber)
+          echo $(Build.BuildId)
+          sed -i "s/IMAGE_TAG/\"$(Build.BuildNumber)\"/g" k8s-base/kustomization.yaml
+          cat k8s-base/kustomization.yaml
+          cd k8s-base && kubectl apply -k .
