@@ -1,13 +1,11 @@
-apiVersion: kustomization.config.k8s.io/v1beta1
-kind: kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 images:
-- name: spring-boot-image
-  newName: hemasivakishore/aks
-  newTag: IMAGE_TAG
+- name: customimage
+  newName: hemasivakishore/jinja2u
+  newTag: '16.04'
 
 
 resources:
 - spring-deployment.yaml
-- spring-ingress.yaml
-- alb-ingress.yaml
-- voting.yaml
+- service.yaml
